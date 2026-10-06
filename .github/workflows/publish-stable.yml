@@ -96,14 +96,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - "$GENERATION" <<'PY'
+          python - "$GENERATION" "$SECURITY_VERSION" <<'PY'
           import base64, json, pathlib, sys
           requested = int(sys.argv[1])
+          requested_security = int(sys.argv[2])
           document = json.loads(pathlib.Path("channels/stable/manifest.json").read_text())
           if document.get("state") != "unconfigured":
               current = json.loads(base64.b64decode(document["payload"], validate=True))
               if requested <= current["generation"]:
                   raise SystemExit("generation must exceed the published generation")
+              if requested_security < current["security_version"]:
+                  raise SystemExit("security version must not decrease")
           PY
       - name: Sign and verify manifest
         shell: bash
