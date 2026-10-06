@@ -2,7 +2,7 @@
 import base64, hashlib, json, pathlib, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "channels" / "stable" / "manifest.json"
+MANIFEST = pathlib.Path(sys.argv[1]) if len(sys.argv)>1 else ROOT / "channels" / "stable" / "manifest.json"
 MAX_MANIFEST = 12 * 1024
 ALLOWED_ENVELOPE = {"schema", "algorithm", "key_id", "payload", "signature"}
 REQUIRED_PAYLOAD = {"product","channel","generation","version","security_version","board","chip","partition_layout","size","sha256","url","min_updater","notes_de","notes_en"}
@@ -13,7 +13,7 @@ if len(raw) > MAX_MANIFEST:
     raise SystemExit("manifest too large")
 doc = json.loads(raw)
 if doc.get("state") == "unconfigured":
-    if set(doc) != {"schema","state","channel","message"} or doc["schema"] != 1 or doc["channel"] != "stable":
+    if set(doc) != {"schema","state","channel","message"} or doc["schema"] != 1 or doc["channel"] not in ("stable","pilot"):
         raise SystemExit("invalid unconfigured manifest")
     print("stable channel intentionally unconfigured")
     raise SystemExit(0)
@@ -29,7 +29,7 @@ except Exception as exc:
 payload = json.loads(payload_raw)
 if set(payload) != REQUIRED_PAYLOAD:
     raise SystemExit(f"payload fields differ: {set(payload) ^ REQUIRED_PAYLOAD}")
-if payload["product"] != "rp-phone" or payload["channel"] != "stable" or payload["chip"] != "esp32s3":
+if payload["product"] != "rp-phone" or payload["channel"] not in ("stable","pilot") or payload["chip"] != "esp32s3":
     raise SystemExit("wrong product, channel or chip")
 if payload["board"] not in ALLOWED_BOARDS:
     raise SystemExit("unsupported board")

@@ -14,7 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Validate manifest structure and repository boundary
-        run: python tools/validate_manifest.py
+        run: |
+          python -m unittest discover -s tests
+          find channels -name manifest.json -print0 | while IFS= read -r -d '' manifest; do
+            python tools/validate_manifest.py "$manifest"
+            python tools/verify_manifest_signature.py "$manifest"
+          done
       - name: Reject private-key material
         run: |
           if grep -RIl --exclude='validate.yml' --exclude='SECURITY.md' -- 'BEGIN .*PRIVATE KEY' .; then

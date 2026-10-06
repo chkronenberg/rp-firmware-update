@@ -9,6 +9,7 @@ import pathlib
 import re
 import subprocess
 import tempfile
+import struct
 
 REPOSITORY = "chkronenberg/rp-firmware-update"
 KEY_ID = "prod-2026-01"
@@ -19,6 +20,7 @@ SAFE_ASSET = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.bin")
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--channel", choices=("stable","pilot"), default="stable")
     parser.add_argument("--image", required=True, type=pathlib.Path)
     parser.add_argument("--private-key", required=True, type=pathlib.Path)
     parser.add_argument("--version", required=True)
@@ -53,6 +55,25 @@ def main():
     if not 65536 <= size <= 4 * 1024 * 1024:
         raise SystemExit("image size is outside the supported OTA range")
 
+    image = args.image.read_bytes()
+    layouts={"esp32s3-n16r8":"ota-v1-4m","esp32s3wood-n16r8":"ota-v1-4m","esp32s3wood-n8r8":"ota-v1-2m","esp32s3echobase-n8r8":"ota-v1-2m"}
+    if layouts[args.board] != args.partition_layout:
+        raise SystemExit("board/layout combination is invalid")
+    if len(image) > (4 if args.partition_layout=="ota-v1-4m" else 2)*1024*1024:
+        raise SystemExit("image exceeds its target OTA slot")
+    if len(image)<256 or image[0]!=0xE9 or struct.unpack_from("<H",image,12)[0]!=9:
+        raise SystemExit("not an ESP32-S3 application image")
+    if struct.unpack_from("<I",image,32)[0]!=0xABCD5432:
+        raise SystemExit("missing ESP-IDF application descriptor")
+    image_version=image[48:80].split(b"\0",1)[0].decode("ascii")
+    if image_version!=args.version:
+        raise SystemExit("manifest version differs from application version")
+    if args.board.encode()+b"\0" not in image:
+        raise SystemExit("selected board identifier is absent from image")
+    if not 0<=args.security_version<=65535 or not 1<=args.generation<=2147483647:
+        raise SystemExit("generation/security-version exceeds device parser bounds")
+    if any(len(v.encode())>=256 for v in (args.notes_de,args.notes_en)):
+        raise SystemExit("release notes exceed device limits")
     key_details = subprocess.run(
         ["openssl", "pkey", "-in", str(args.private_key), "-text", "-noout"],
         check=True, capture_output=True, text=True,
@@ -61,7 +82,7 @@ def main():
         raise SystemExit("signing key must use ECDSA P-256")
 
     payload = {
-        "product": "rp-phone", "channel": "stable", "generation": args.generation,
+        "product": "rp-phone", "channel": args.channel, "generation": args.generation,
         "version": args.version, "security_version": args.security_version,
         "board": args.board, "chip": "esp32s3", "partition_layout": args.partition_layout,
         "size": size, "sha256": hashlib.sha256(args.image.read_bytes()).hexdigest(),
