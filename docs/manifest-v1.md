@@ -36,12 +36,11 @@ The checked-in `state: unconfigured` document intentionally cannot install firmw
 
 1. Build and test the private source repository at an immutable commit.
 2. Record the approved hardware profile and partition layout.
-3. Hash the application image.
-4. Prepare and independently review the payload.
-5. Sign the payload outside normal CI with the production private key.
-6. Upload the immutable image to a GitHub Release in this repository.
-7. Validate the signature and download URL from a clean environment.
-8. Replace the channel manifest only after approval.
-9. Roll out to pilot devices before broader release.
+3. Perform hardware acceptance for the exact image.
+4. Upload the immutable image to a GitHub Release in this repository.
+5. Run the manually dispatched, environment-protected publish workflow.
+6. Independently review the generated manifest pull request and download URL.
+7. Test installation and rollback on pilot devices.
+8. Merge the manifest pull request only after approval.
 
-Private signing keys must never be committed, uploaded as release assets or embedded in firmware.
+See [releasing.md](releasing.md) for the operational procedure. Private signing keys must never be committed, uploaded as release assets or embedded in firmware.
