@@ -8,6 +8,11 @@ on:
         required: true
         type: choice
         options: [pilot, stable]
+      legacy_bridge:
+        description: Also publish the stable transition manifest for existing WOOD 16 MB devices
+        required: false
+        default: false
+        type: boolean
       version:
         description: Semantic firmware version, without v prefix
         required: true
@@ -60,6 +65,7 @@ jobs:
     timeout-minutes: 5
     environment: stable-release
     env:
+      LEGACY_BRIDGE: ${{ inputs.legacy_bridge }}
       CHANNEL: ${{ inputs.channel }}
       VERSION: ${{ inputs.version }}
       GENERATION: ${{ inputs.generation }}
@@ -78,6 +84,9 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$CHANNEL" == stable || "$CHANNEL" == pilot ]]
+          if [[ "$LEGACY_BRIDGE" == true ]]; then
+            [[ "$CHANNEL" == stable && "$BOARD" == esp32s3wood-n16r8 ]]
+          fi
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
           [[ "$MIN_UPDATER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
           [[ "$ASSET_NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$ ]]
@@ -107,8 +116,11 @@ jobs:
           import base64, json, pathlib, sys
           requested = int(sys.argv[1])
           requested_security = int(sys.argv[2])
-          for channel in ("stable","pilot"):
-              document = json.loads(pathlib.Path(f"channels/{channel}/{sys.argv[4]}/manifest.json").read_text())
+          paths = [pathlib.Path(f"channels/{channel}/{sys.argv[4]}/manifest.json") for channel in ("stable","pilot")]
+          if sys.argv[4] == "esp32s3wood-n16r8":
+              paths.append(pathlib.Path("channels/stable/manifest.json"))
+          for path in paths:
+              document = json.loads(path.read_text())
               if document.get("state") != "unconfigured":
                   current = json.loads(base64.b64decode(document["payload"], validate=True))
                   if requested <= current["generation"]:
@@ -128,6 +140,9 @@ jobs:
             --output "channels/$CHANNEL/$BOARD/manifest.json"
           python tools/validate_manifest.py "channels/$CHANNEL/$BOARD/manifest.json"
           python tools/verify_manifest_signature.py "channels/$CHANNEL/$BOARD/manifest.json"
+          if [[ "$LEGACY_BRIDGE" == true ]]; then
+            cp "channels/$CHANNEL/$BOARD/manifest.json" channels/stable/manifest.json
+          fi
       - name: Remove private key
         if: always()
         shell: bash
@@ -141,10 +156,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add "channels/$CHANNEL/$BOARD/manifest.json"
-          git commit -m "release: prepare stable firmware $VERSION"
+          if [[ "$LEGACY_BRIDGE" == true ]]; then git add channels/stable/manifest.json; fi
+          git commit -m "release: prepare $CHANNEL firmware $VERSION"
           git push origin "$branch"
           if ! gh pr create --base main --head "$branch" \
-            --title "release: publish stable firmware $VERSION" \
+            --title "release: publish $CHANNEL firmware $VERSION" \
             --body "Signed $CHANNEL manifest for $BOARD firmware $VERSION. Verify image provenance and hardware acceptance before merging."; then
             echo "::warning::Automatic PR creation unavailable. Signed branch is preserved."
             printf 'Create the approval PR manually: https://github.com/%s/compare/main...%s\n' "$GITHUB_REPOSITORY" "$branch" >> "$GITHUB_STEP_SUMMARY"

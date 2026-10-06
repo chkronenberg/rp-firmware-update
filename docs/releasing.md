@@ -34,3 +34,7 @@ Erfolgreiches Update und Erhalt von WLAN/SIP/Admin/Identität/Sprache/Anrufliste
 Releaseangebote stoppen, ohne laufende Geräte remote zurückzusetzen. Bereits installierte Images benötigen einen signierten Korrekturrelease mit höherer Generation. Schlüsselrotation zuerst mit überlappenden Vertrauensankern implementieren und testen. Bei kompromittiertem Schlüssel ohne unabhängigen Anker kann physischer Service erforderlich sein.
 
 Status: Softwareprozess implementiert. Branchschutz, echte Hardwareabnahme, geschützter Zeitbootstrap, Secure Boot/Flash Encryption, Schlüsselrotation und vollständige SBOM/CVE-Abnahme sind separat nachzuweisen.
+
+### Übergangsmanifest für bestehende Geräte
+
+Bei der Stable-Freigabe von 0.4.3 für `esp32s3wood-n16r8` im Workflow `legacy_bridge=true` wählen. Der Workflow schreibt denselben signierten Inhalt zusätzlich nach `channels/stable/manifest.json` und nimmt beide Pfade in den Freigabe-PR auf. Pilot erlaubt diesen Schalter nicht. `min_updater=0.4.1` beibehalten, sofern der Hardwaretest den Übergang von 0.4.2 bestätigt. Andere Boards benötigen einen Serviceflash für den ersten Wechsel auf die boardgebundenen Pfade. Bis zur geprüften Freigabe bleiben die bestehenden 0.4.2-Manifeste unverändert.
