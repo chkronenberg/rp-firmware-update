@@ -1,0 +1,23 @@
+name: Validate update channel
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate manifest structure and repository boundary
+        run: python tools/validate_manifest.py
+      - name: Reject private-key material
+        run: |
+          if grep -RIl --exclude='validate.yml' --exclude='SECURITY.md' -- 'BEGIN .*PRIVATE KEY' .; then
+            echo "Private-key material must never be committed"
+            exit 1
+          fi

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/chkronenberg/rp-firmware-update/blob/main/schemas/manifest-v1.schema.json",
+  "title": "RP signed firmware manifest envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "algorithm",
+    "key_id",
+    "payload",
+    "signature"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "algorithm": {
+      "const": "ECDSA-P256-SHA256"
+    },
+    "key_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,31}$"
+    },
+    "payload": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 10924,
+      "contentEncoding": "base64"
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 256,
+      "contentEncoding": "base64"
+    }
+  }
+}
