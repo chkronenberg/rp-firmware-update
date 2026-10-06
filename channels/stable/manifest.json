@@ -1,6 +1,7 @@
 {
   "schema": 1,
-  "state": "unconfigured",
-  "channel": "stable",
-  "message": "No signed firmware release has been published."
+  "algorithm": "ECDSA-P256-SHA256",
+  "key_id": "prod-2026-01",
+  "payload": "eyJib2FyZCI6ImVzcDMyczN3b29kLW4xNnI4IiwiY2hhbm5lbCI6InN0YWJsZSIsImNoaXAiOiJlc3AzMnMzIiwiZ2VuZXJhdGlvbiI6MSwibWluX3VwZGF0ZXIiOiIwLjQuMSIsIm5vdGVzX2RlIjoiU2lnbmllcnRlcyBPVEEtUGlsb3R1cGRhdGUgMC40LjIgbWl0IHNpY2hlcmVtIEEvQi1Sb2xsYmFjay4iLCJub3Rlc19lbiI6IlNpZ25lZCBPVEEgcGlsb3QgdXBkYXRlIDAuNC4yIHdpdGggc2FmZSBBL0Igcm9sbGJhY2suIiwicGFydGl0aW9uX2xheW91dCI6Im90YS12MS00bSIsInByb2R1Y3QiOiJycC1waG9uZSIsInNlY3VyaXR5X3ZlcnNpb24iOjAsInNoYTI1NiI6ImViYzVlMmU4NjBmZmYwOTllZjkzYTljZGEwMmM2NjQ3ODhhZWY4NjY0ZDZiOWViNmExOTM5ZDY0NmY0N2VkZTEiLCJzaXplIjoxMzY0MTI4LCJ1cmwiOiJodHRwczovL2dpdGh1Yi5jb20vY2hrcm9uZW5iZXJnL3JwLWZpcm13YXJlLXVwZGF0ZS9yZWxlYXNlcy9kb3dubG9hZC92MC40LjIvcmV0cm9waG9uZS1lc3AzMnMzd29vZC1uMTZyOC0wLjQuMi5iaW4iLCJ2ZXJzaW9uIjoiMC40LjIifQ==",
+  "signature": "MEQCICaYC+vboEPRnDJAyfkuVXegeBxHu/ZVabwoW1L+qFd7AiBUf7Z7xPPM3tDqtGF7ZNfSvqMG6a20NZpsjX4Pd4HjEQ=="
 }
