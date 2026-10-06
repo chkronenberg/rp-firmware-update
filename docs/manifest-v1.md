@@ -1,8 +1,10 @@
 # Signed manifest v1
 
-The device requests the static stable-channel URL:
+Firmware 0.4.3 requests the static, board-specific channel URL:
 
-`https://raw.githubusercontent.com/chkronenberg/rp-firmware-update/main/channels/stable/manifest.json`
+`https://raw.githubusercontent.com/chkronenberg/rp-firmware-update/main/channels/{stable|pilot}/{board}/manifest.json`
+
+Firmware 0.4.2 uses the legacy `channels/stable/manifest.json`. The transition procedure is documented in releasing.md.
 
 It does not call the GitHub API and stores no GitHub credential.
 
@@ -13,7 +15,7 @@ A publishable manifest is a JSON object containing `schema`, `algorithm`, `key_i
 Required payload fields:
 
 - `product`: `rp-phone`
-- `channel`: `stable` or `beta`
+- `channel`: `stable` or `pilot`
 - `generation`: monotonically increasing positive integer
 - `version`: semantic firmware version
 - `security_version`: separately governed anti-downgrade value
@@ -30,7 +32,7 @@ Unknown fields are rejected in version 1. A release URL is transport only. The d
 
 ## Unconfigured state
 
-The checked-in `state: unconfigured` document intentionally cannot install firmware. It exists so development devices receive a clear “release channel not configured” result until an offline production key and the first approved release exist.
+The checked-in `state: unconfigured` document intentionally cannot install firmware. It is used for board/channel combinations that do not yet have an approved signed image.
 
 ## Release procedure
 
@@ -40,7 +42,7 @@ The checked-in `state: unconfigured` document intentionally cannot install firmw
 4. Upload the immutable image to a GitHub Release in this repository.
 5. Run the manually dispatched, environment-protected publish workflow.
 6. Independently review the generated manifest pull request and download URL.
-7. Test installation and rollback on pilot devices.
-8. Merge the manifest pull request only after approval.
+7. Merge the reviewed pilot-channel manifest and test installation and rollback on pilot devices.
+8. Publish and merge a separate stable-channel manifest with a higher generation only after hardware acceptance.
 
 See [releasing.md](releasing.md) for the operational procedure. Private signing keys must never be committed, uploaded as release assets or embedded in firmware.

@@ -1,0 +1,6 @@
+{
+  "schema": 1,
+  "state": "unconfigured",
+  "channel": "pilot",
+  "message": "No approved firmware for this board and channel."
+}

@@ -6,9 +6,10 @@ import json
 import pathlib
 import subprocess
 import tempfile
+import sys
 
 root = pathlib.Path(__file__).resolve().parents[1]
-document = json.loads((root / "channels/stable/manifest.json").read_text(encoding="utf-8"))
+document = json.loads((pathlib.Path(sys.argv[1]) if len(sys.argv)>1 else root / "channels/stable/manifest.json").read_text(encoding="utf-8"))
 if document.get("state") == "unconfigured":
     print("stable channel intentionally unconfigured")
     raise SystemExit(0)
