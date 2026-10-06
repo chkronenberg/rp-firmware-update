@@ -14,4 +14,4 @@ Public distribution repository for signed RP firmware releases and update manife
 
 The device reads `channels/stable/manifest.json`. Until the production signing ceremony and hardware acceptance are complete, the manifest deliberately publishes no installable image.
 
-See [docs/manifest-v1.md](docs/manifest-v1.md) for the format and release procedure.
+See [docs/manifest-v1.md](docs/manifest-v1.md) for the format. The review-gated publishing procedure is documented in [docs/releasing.md](docs/releasing.md).

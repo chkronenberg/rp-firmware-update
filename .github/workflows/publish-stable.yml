@@ -1,0 +1,137 @@
+name: Prepare stable firmware release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semantic firmware version, without v prefix
+        required: true
+        type: string
+      generation:
+        description: Monotonically increasing OTA generation
+        required: true
+        type: number
+      security_version:
+        description: Anti-downgrade security version
+        required: true
+        type: number
+      board:
+        description: Exact hardware profile
+        required: true
+        type: choice
+        options: [esp32s3-n16r8, esp32s3wood-n16r8, esp32s3wood-n8r8, esp32s3echobase-n8r8]
+      partition_layout:
+        description: OTA partition layout
+        required: true
+        type: choice
+        options: [ota-v1-4m, ota-v1-2m]
+      asset_name:
+        description: Existing .bin asset in release vVERSION
+        required: true
+        type: string
+      min_updater:
+        description: Oldest firmware version that can install this update
+        required: true
+        type: string
+      notes_de:
+        description: Short German release note
+        required: true
+        type: string
+      notes_en:
+        description: Short English release note
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: publish-stable
+  cancel-in-progress: false
+
+jobs:
+  prepare-manifest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: stable-release
+    env:
+      VERSION: ${{ inputs.version }}
+      GENERATION: ${{ inputs.generation }}
+      SECURITY_VERSION: ${{ inputs.security_version }}
+      BOARD: ${{ inputs.board }}
+      PARTITION_LAYOUT: ${{ inputs.partition_layout }}
+      ASSET_NAME: ${{ inputs.asset_name }}
+      MIN_UPDATER: ${{ inputs.min_updater }}
+      NOTES_DE: ${{ inputs.notes_de }}
+      NOTES_EN: ${{ inputs.notes_en }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate untrusted dispatch inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
+          [[ "$MIN_UPDATER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
+          [[ "$ASSET_NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$ ]]
+          [[ "$GENERATION" =~ ^[1-9][0-9]*$ ]]
+          [[ "$SECURITY_VERSION" =~ ^[0-9]+$ ]]
+      - name: Download immutable release asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release"
+          gh release download "v$VERSION" --repo "$GITHUB_REPOSITORY" --pattern "$ASSET_NAME" --dir "$RUNNER_TEMP/release"
+          test -f "$RUNNER_TEMP/release/$ASSET_NAME"
+      - name: Materialize signing key
+        shell: bash
+        env:
+          OTA_SIGNING_KEY_PEM: ${{ secrets.OTA_SIGNING_KEY_PEM }}
+        run: |
+          set -euo pipefail
+          test -n "$OTA_SIGNING_KEY_PEM"
+          umask 077
+          printf '%s\n' "$OTA_SIGNING_KEY_PEM" > "$RUNNER_TEMP/ota-signing-key.pem"
+      - name: Reject replayed generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$GENERATION" <<'PY'
+          import base64, json, pathlib, sys
+          requested = int(sys.argv[1])
+          document = json.loads(pathlib.Path("channels/stable/manifest.json").read_text())
+          if document.get("state") != "unconfigured":
+              current = json.loads(base64.b64decode(document["payload"], validate=True))
+              if requested <= current["generation"]:
+                  raise SystemExit("generation must exceed the published generation")
+          PY
+      - name: Sign and verify manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/sign_manifest.py \
+            --image "$RUNNER_TEMP/release/$ASSET_NAME" --private-key "$RUNNER_TEMP/ota-signing-key.pem" \
+            --version "$VERSION" --generation "$GENERATION" --security-version "$SECURITY_VERSION" \
+            --board "$BOARD" --partition-layout "$PARTITION_LAYOUT" --asset-name "$ASSET_NAME" \
+            --min-updater "$MIN_UPDATER" --notes-de "$NOTES_DE" --notes-en "$NOTES_EN" \
+            --output channels/stable/manifest.json
+          python tools/validate_manifest.py
+          python tools/verify_manifest_signature.py
+      - name: Remove private key
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/ota-signing-key.pem"
+      - name: Open release approval pull request
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="release/stable-${VERSION}-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add channels/stable/manifest.json
+          git commit -m "release: prepare stable firmware $VERSION"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "release: publish stable firmware $VERSION" \
+            --body "Publishes the signed stable manifest for firmware $VERSION. Review the asset, hardware profile, generation and security version before merging."
