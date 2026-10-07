@@ -9,7 +9,7 @@
 
 ## Pro Release
 
-1. Private Firmwareversion in CMakeLists.txt erhöhen; vollständige CI und WebGUI-Prüfung auf dem freigegebenen Commit ausführen.
+1. Private Firmwareversion in CMakeLists.txt erhöhen: Pilot immer `X.Y.Z-pilot.N` (N beginnt bei 1), Stable immer `X.Y.Z`. Beispiel: `0.4.7-pilot.1` → `0.4.7-pilot.2` → `0.4.7`. Vollständige CI und WebGUI-Prüfung auf dem freigegebenen Commit ausführen. Der Suffix gehört in die tatsächliche Imageversion, das signierte Manifest, den Dateinamen und den GitHub-Tag; ein Pre-release-Häkchen allein genügt nicht. Der Signierworkflow erzwingt das Schema für neue Veröffentlichungen.
 2. Exaktes Boardartefakt sichern. Nur die Anwendung `.bin` veröffentlichen, niemals Provisionierungsdaten, Quellcode, private Schlüssel oder vollständige Factory-Pakete.
 3. Commit, CI-Run, Toolchain, sdkconfig, Lockdatei, Prüfsumme und Testprotokoll dauerhaft im privaten Nachweispaket sichern. Eine vollständige SBOM/CVE-Bewertung ist vor Kundenfreigabe erforderlich.
 4. GitHub Release `vVERSION` erstellen und Anwendungsimage anhängen. Pilot als Pre-release kennzeichnen.
@@ -18,7 +18,9 @@
 7. Environment freigeben. Workflow prüft Imageversion, Chip, enthaltene Boardkennung, Slotgrösse und Layout; dann signiert und verifiziert er das Manifest.
 8. Manifest-PR prüfen: Imageherkunft, Version, SHA-256, Grösse, Board, Layout, Kanal, Generation und Security-Version. CI muss grün sein.
 9. Pilot-PR mergen. Auf einem Pilotgerät ausdrücklich Pilotkanal wählen und über die WebGUI installieren. Authentifizierte NTS-Zeit und aufgelegter Hörer sind Voraussetzung.
-10. Hardwaretestprotokoll abschliessen. Dasselbe unveränderte Image für Stable mit einer höheren Generation signieren und nach Review mergen.
+10. Hardwaretestprotokoll abschliessen. Für Stable den freigegebenen Quellstand mit der endgültigen Version ohne Pilot-Suffix neu bauen (keine weiteren Funktionsänderungen). Diesen finalen Build erneut per OTA und Bootbestätigung prüfen, dann als Stable mit einer höheren Generation signieren und nach Review mergen. Pilotimage, Versionsnummer und Signatur niemals nachträglich umbenennen oder überschreiben.
+
+Die bis 0.4.6 publizierten Pilotmanifeste hatten noch keinen Versionssuffix. Sie bleiben als unveränderte historische Artefakte gültig; neue Signierungen müssen dem obigen Schema folgen. Geräte ab `0.4.7-pilot.1` berücksichtigen Vorabversionen beim Versionsvergleich; ältere Geräte vergleichen nur die drei Zahlen und erkennen deshalb keinen Wechsel zwischen Piloten und Stable derselben Basisversion. Ein erstes Update auf eine höhere Basisversion installiert den korrigierten Vergleich.
 
 ## Migration und Kompatibilität
 
