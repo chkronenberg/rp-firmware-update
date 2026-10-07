@@ -13,7 +13,7 @@ import struct
 
 REPOSITORY = "chkronenberg/rp-firmware-update"
 KEY_ID = "prod-2026-01"
-ALLOWED_BOARDS = {"esp32s3-n16r8", "esp32s3wood-n16r8", "esp32s3wood-n8r8", "esp32s3echobase-n8r8"}
+ALLOWED_BOARDS = {"esp32s3-n16r8", "esp32s3wood-n16r8", "esp32s3wood-n8r8", "esp32s3echobase-n8r8", "esp32s3echobase-n16r8"}
 SEMVER = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?")
 SAFE_ASSET = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.bin")
 
@@ -56,7 +56,7 @@ def main():
         raise SystemExit("image size is outside the supported OTA range")
 
     image = args.image.read_bytes()
-    layouts={"esp32s3-n16r8":"ota-v1-4m","esp32s3wood-n16r8":"ota-v1-4m","esp32s3wood-n8r8":"ota-v1-2m","esp32s3echobase-n8r8":"ota-v1-2m"}
+    layouts={"esp32s3-n16r8":"ota-v1-4m","esp32s3wood-n16r8":"ota-v1-4m","esp32s3wood-n8r8":"ota-v1-2m","esp32s3echobase-n8r8":"ota-v1-2m","esp32s3echobase-n16r8":"ota-v1-4m"}
     if layouts[args.board] != args.partition_layout:
         raise SystemExit("board/layout combination is invalid")
     if len(image) > (4 if args.partition_layout=="ota-v1-4m" else 2)*1024*1024:

@@ -6,7 +6,7 @@ MANIFEST = pathlib.Path(sys.argv[1]) if len(sys.argv)>1 else ROOT / "channels" /
 MAX_MANIFEST = 12 * 1024
 ALLOWED_ENVELOPE = {"schema", "algorithm", "key_id", "payload", "signature"}
 REQUIRED_PAYLOAD = {"product","channel","generation","version","security_version","board","chip","partition_layout","size","sha256","url","min_updater","notes_de","notes_en"}
-ALLOWED_BOARDS = {"esp32s3-n16r8","esp32s3wood-n16r8","esp32s3wood-n8r8","esp32s3echobase-n8r8"}
+ALLOWED_BOARDS = {"esp32s3-n16r8","esp32s3wood-n16r8","esp32s3wood-n8r8","esp32s3echobase-n8r8", "esp32s3echobase-n16r8"}
 
 raw = MANIFEST.read_bytes()
 if len(raw) > MAX_MANIFEST:
@@ -42,7 +42,7 @@ if not re.fullmatch(r"[0-9a-f]{64}", payload["sha256"]):
 prefix = "https://github.com/chkronenberg/rp-firmware-update/releases/download/"
 if not payload["url"].startswith(prefix) or "?" in payload["url"] or "#" in payload["url"]:
     raise SystemExit("release URL is not immutable or is outside this repository")
-layouts={"esp32s3-n16r8":"ota-v1-4m","esp32s3wood-n16r8":"ota-v1-4m","esp32s3wood-n8r8":"ota-v1-2m","esp32s3echobase-n8r8":"ota-v1-2m"}
+layouts={"esp32s3-n16r8":"ota-v1-4m","esp32s3wood-n16r8":"ota-v1-4m","esp32s3wood-n8r8":"ota-v1-2m","esp32s3echobase-n8r8":"ota-v1-2m","esp32s3echobase-n16r8":"ota-v1-4m"}
 if doc["key_id"]!="prod-2026-01" or type(payload["security_version"]) is not int or not 0<=payload["security_version"]<=65535:
     raise SystemExit("invalid key/security version")
 if type(payload["generation"]) is not int or not 1<=payload["generation"]<=2147483647:

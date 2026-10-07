@@ -29,7 +29,7 @@ on:
         description: Exact hardware profile
         required: true
         type: choice
-        options: [esp32s3-n16r8, esp32s3wood-n16r8, esp32s3wood-n8r8, esp32s3echobase-n8r8]
+        options: [esp32s3-n16r8, esp32s3wood-n16r8, esp32s3wood-n8r8, esp32s3echobase-n8r8, esp32s3echobase-n16r8]
       partition_layout:
         description: OTA partition layout
         required: true
