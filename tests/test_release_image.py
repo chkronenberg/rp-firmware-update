@@ -1,6 +1,12 @@
-import unittest, subprocess, tempfile, pathlib, struct, sys, json, base64
+import unittest, subprocess, tempfile, pathlib, struct, sys, json, base64, importlib.util
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 class ImageValidation(unittest.TestCase):
+ def test_new_release_channel_versions(self):
+  spec=importlib.util.spec_from_file_location('sign_manifest',ROOT/'tools/sign_manifest.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+  for channel,version in [('pilot','0.4.7-pilot.1'),('pilot','0.4.7-pilot.10'),('stable','0.4.7')]:
+   module.require_channel_version(channel,version)
+  for channel,version in [('pilot','0.4.7'),('pilot','0.4.7-pilot.0'),('pilot','0.4.7-pilot.01'),('stable','0.4.7-pilot.1')]:
+   with self.assertRaises(SystemExit):module.require_channel_version(channel,version)
  def test_wrong_version_rejected_before_signing(self):
   with tempfile.TemporaryDirectory() as folder:
    p=pathlib.Path(folder); image=bytearray(65536); image[0]=0xE9;struct.pack_into('<H',image,12,9);struct.pack_into('<I',image,32,0xABCD5432);image[48:54]=b'0.4.2\0';image[300:320]=b'esp32s3wood-n16r8\0'.ljust(20,b'\0');(p/'image.bin').write_bytes(image);(p/'key.pem').write_text('placeholder')

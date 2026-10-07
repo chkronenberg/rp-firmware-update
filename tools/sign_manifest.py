@@ -41,9 +41,16 @@ def require_semver(name, value):
         raise SystemExit(f"{name} must be a semantic version")
 
 
+def require_channel_version(channel,version):
+    pattern=r"[0-9]+\.[0-9]+\.[0-9]+-pilot\.[1-9][0-9]*" if channel=="pilot" else r"[0-9]+\.[0-9]+\.[0-9]+"
+    if not re.fullmatch(pattern,version):
+        raise SystemExit("pilot requires X.Y.Z-pilot.N; stable requires X.Y.Z")
+
+
 def main():
     args = parse_args()
     require_semver("version", args.version)
+    require_channel_version(args.channel,args.version)
     require_semver("min-updater", args.min_updater)
     if args.generation < 1 or args.security_version < 0:
         raise SystemExit("generation must be positive and security-version non-negative")

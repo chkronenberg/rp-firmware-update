@@ -87,7 +87,11 @@ jobs:
           if [[ "$LEGACY_BRIDGE" == true ]]; then
             [[ "$CHANNEL" == stable && "$BOARD" == esp32s3wood-n16r8 ]]
           fi
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
+          if [[ "$CHANNEL" == pilot ]]; then
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-pilot\.[1-9][0-9]*$ ]]
+          else
+            [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          fi
           [[ "$MIN_UPDATER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
           [[ "$ASSET_NAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.bin$ ]]
           [[ "$GENERATION" =~ ^[1-9][0-9]*$ ]]
